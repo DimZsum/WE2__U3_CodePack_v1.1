@@ -111,7 +111,7 @@ describe('Task 1.a CRUD', () => {
         });
     });
     // *******************************************************
-    describe('/pictures/:id REST API PUT', function() {
+    describe.skip('/pictures/:id REST API PUT', function() {
         // good PUTs
         it('should save a proper PUT with required fields and change in .description set to ""', (done) => {
             pictureCorrect1Result.description = "";

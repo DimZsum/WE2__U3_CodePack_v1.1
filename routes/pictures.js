@@ -65,6 +65,14 @@ pictures.use((req, res, next) => {
             return;
         }
     }
+
+    // if (['DELETE'].includes(req.method)) {
+    //     let buffer = store.select(storeKey,req.params.id);
+    //     if (!buffer){
+    //         let err = new HttpError('Not Found ' + req.originalUrl, 404);
+    //         next(err);
+    //     }
+    // }
     next();
 });
 
@@ -114,16 +122,9 @@ pictures.route('/:id')
         next();
     })
     .put((req,res,next) => {
-        let buffer = store.select(storeKey,req.params.id);
-        if (!buffer){
-            let err = new HttpError('this method is not allowed at ' + req.originalUrl, codes.wrongmethod);
-            next(err);
-        }
-        if (buffer.id !== req.body.id){
-            let err = new HttpError('Bad ID ' + req.originalUrl, 400);
-            next(err);
-        }
-
+        res.locals.items = store.select(storeKey,req.params.id);
+        res.locals.processed = true;
+        let buffer = res.locals.items;
         buffer = {
             timestamp: new Date().getTime(),
             width: req.body.width !== undefined ? req.body.width : buffer.width,
@@ -135,8 +136,20 @@ pictures.route('/:id')
             id: buffer.id
         };
         store.replace(storeKey, req.params.id, buffer);
-        const result = store.select(storeKey,req.params.id)
+        const result = store.select(storeKey,req.params.id);
         res.status(200).json(result);
+    })
+    .delete((req, res, next) => {
+        res.locals.processed = true;
+        try {
+            store.remove(storeKey,req.params.id);
+
+        } catch (err){
+            let err1 = new HttpError('Not Found ', 404);
+            next(err1);
+        }
+
+        next();
     })
     .all((req,res,next) => {
        if (res.locals.processed) {

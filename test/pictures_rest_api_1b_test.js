@@ -26,7 +26,7 @@ const pictureIncorrectTitle = cfg.pictureIncorrectTitle;
 const pictureIncorrectDescription = cfg.pictureInCorrectDescription;
 
 // start of tests ********************************************************************************
-describe.skip('Task 1.b JSON Error data', () => {
+describe('Task 1.b JSON Error data', () => {
     let pictureCorrect1Result = null;
     let pictureCorrect2Result = null;
     const pictureIDsCleanup = [];
