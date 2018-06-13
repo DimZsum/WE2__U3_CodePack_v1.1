@@ -54,11 +54,11 @@ app.use('/pictures', pictures);
 // (from express-generator boilerplate)
 // Errorhandling and requests without proper URLs ************************
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
-    debug('Catching unmatched request to answer with 404');
-    const err = new HttpError('Not Found', 404);
-    next(err);
-});
+// app.use(function(req, res, next) {
+//     debug('Catching unmatched request to answer with 404');
+//     const err = new HttpError('Not Found', 404);
+//     next(err);
+// });
 
 
 // error handlers (express recognizes it by 4 parameters!)

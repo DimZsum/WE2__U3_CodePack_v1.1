@@ -28,6 +28,16 @@ const storeKey = 'pictures';
 const requiredKeys = {width: 'number', height: 'number', src: 'string'};
 const optionalKeys = {title: 'string', description: 'string', views: 'number'};
 const internalKeys = {id: 'number', timestamp: 'number'};
+const generalKey = {
+    width: 'number',
+    height: 'number',
+    src: 'string',
+    title: 'string',
+    description: 'string',
+    views: 'number',
+    id: 'number',
+    timestamp: 'number'
+};
 
 //Middleware checks JSON Body
 
@@ -35,7 +45,7 @@ pictures.use((req, res, next) => {
 
     if (req.method === 'POST') {
         if (typeof req.body.width !== 'number' || req.body.width < 0 ||
-            typeof req.body.height !== 'number' || req.body.height < 0||
+            typeof req.body.height !== 'number' || req.body.height < 0 ||
             typeof req.body.src !== 'string') {
             let err = new HttpError('Missing or Wrong required Data!', 400);
             next(err);
@@ -44,44 +54,65 @@ pictures.use((req, res, next) => {
     }
 
     if (['PUT', 'POST'].includes(req.method)) {
-        if (req.body.title && (typeof req.body.title !== 'string' || req.body.title.length > 140)){
+        if (req.body.title && (typeof req.body.title !== 'string' || req.body.title.length > 140)) {
             let err = new HttpError('Title too long!', 400);
             next(err);
             return;
         }
-        if (req.body.description && (typeof req.body.description !== 'string' || req.body.description.length > 1000)){
+        if (req.body.description && (typeof req.body.description !== 'string' || req.body.description.length > 1000)) {
             let err = new HttpError('Description too long!', 400);
             next(err);
             return;
         }
-        if (req.body.views && (typeof req.body.views !== 'number' || req.body.views < 0)){
+        if (req.body.views && (typeof req.body.views !== 'number' || req.body.views < 0)) {
             let err = new HttpError('views is wrong', 400);
             next(err);
             return;
         }
-        if (!(/application\/json/.test(req.get('Content-Type')))){
+        if (!(/application\/json/.test(req.get('Content-Type')))) {
             let err = new HttpError('you sent wrong Content-Type', 415);
             next(err);
             return;
         }
     }
-
-    // if (['DELETE'].includes(req.method)) {
-    //     let buffer = store.select(storeKey,req.params.id);
-    //     if (!buffer){
-    //         let err = new HttpError('Not Found ' + req.originalUrl, 404);
-    //         next(err);
-    //     }
-    // }
+    if (req.method === 'GET') {
+        let filterParams;
+        if (req.query.filter) {
+            filterParams = req.query.filter.split(',');
+            console.log(filterParams);
+            filterParams.forEach((elem) => {
+                if (!(elem in generalKey)) {
+                    let err = new HttpError('filter key does not exist!', 400);
+                    next(err);
+                    return;
+                }
+            });
+        }
+        next();
+    }
     next();
 });
 
 /* GET all pictures */
 pictures.route('/')
     .get((req, res, next) => {
+
         res.locals.items = store.select(storeKey);
         res.locals.processed = true;
+
+        if (req.query.filter) {
+            const filterParams = req.query.filter.split(',');
+            res.locals.items.forEach((elem) => {
+                Object.keys(elem).forEach((key) => {
+                    if (!filterParams.includes(key)) {
+                        delete elem[key];
+                    }
+                });
+                console.log(elem);
+            });
+        }
         logger("GET fetched store items");
+
         next();
     })
     .post((req, res, next) => {
@@ -115,14 +146,24 @@ pictures.route('/')
 // pictures.route('/:id').....
 
 pictures.route('/:id')
-    .get((req,res,next) => {
-        res.locals.items = store.select(storeKey,req.body.params);
+    .get((req, res, next) => {
+        res.locals.items = store.select(storeKey, req.params.id);
         res.locals.processed = true;
+
+        if (req.query.filter) {
+            const filterParams = req.query.filter.split(',');
+            Object.keys(res.locals.items).forEach((key) => {
+                if (!filterParams.includes(key)) {
+                    delete res.locals.items[key];
+                }
+            });
+        }
+
         logger("GET fetched store items");
         next();
     })
-    .put((req,res,next) => {
-        res.locals.items = store.select(storeKey,req.params.id);
+    .put((req, res, next) => {
+        res.locals.items = store.select(storeKey, req.params.id);
         res.locals.processed = true;
         let buffer = res.locals.items;
         buffer = {
@@ -132,34 +173,33 @@ pictures.route('/:id')
             src: req.body.src !== undefined ? req.body.src : buffer.src,
             title: req.body.title !== undefined ? req.body.title : buffer.title,
             description: req.body.description !== undefined ? req.body.description : buffer.description,
-            views: req.body.views!== undefined ? req.body.views : buffer.views,
+            views: req.body.views !== undefined ? req.body.views : buffer.views,
             id: buffer.id
         };
         store.replace(storeKey, req.params.id, buffer);
-        const result = store.select(storeKey,req.params.id);
+        const result = store.select(storeKey, req.params.id);
         res.status(200).json(result);
     })
     .delete((req, res, next) => {
         res.locals.processed = true;
         try {
-            store.remove(storeKey,req.params.id);
+            store.remove(storeKey, req.params.id);
 
-        } catch (err){
+        } catch (err) {
             let err1 = new HttpError('Not Found ', 404);
             next(err1);
         }
 
         next();
     })
-    .all((req,res,next) => {
-       if (res.locals.processed) {
-           next()
-       }  else {
-           let err = new HttpError('this method is not allowed at ' + req.originalUrl, codes.wrongmethod);
-           next(err);
-       }
+    .all((req, res, next) => {
+        if (res.locals.processed) {
+            next()
+        } else {
+            let err = new HttpError('this method is not allowed at ' + req.originalUrl, codes.wrongmethod);
+            next(err);
+        }
     });
-
 
 
 /**
