@@ -75,6 +75,7 @@ pictures.use((req, res, next) => {
             return;
         }
     }
+
     if (req.method === 'GET') {
         let filterParams;
         if (req.query.filter) {
@@ -84,12 +85,26 @@ pictures.use((req, res, next) => {
                 if (!(elem in generalKey)) {
                     let err = new HttpError('filter key does not exist!', 400);
                     next(err);
-                    return;
                 }
             });
         }
-        next();
+        if (req.query.offset) {
+            console.log(req.query.offset, 'puttaaaa');
+            if (isNaN(req.query.offset) || req.query.offset < 0){
+                let err = new HttpError('bad offset param!', 400);
+                next(err);
+            }
+        }
+
+        if (req.query.limit) {
+            if (isNaN(req.query.limit) || req.query.limit < 1){
+                let err = new HttpError('bad limit param!', 400);
+                next(err);
+            }
+        }
     }
+
+
     next();
 });
 
@@ -111,6 +126,21 @@ pictures.route('/')
                 console.log(elem);
             });
         }
+
+        if (req.query.offset){
+            if (req.query.offset >= res.locals.items.length){
+                let err = new HttpError('Bad Offset Parameter', 400);
+                next(err);
+            }
+                res.locals.items.splice(0,req.query.offset);
+        }
+
+        if (req.query.limit){
+            if (req.query.limit < res.locals.items.length){
+                res.locals.items.splice(req.query.limit);
+            }
+        }
+
         logger("GET fetched store items");
 
         next();
