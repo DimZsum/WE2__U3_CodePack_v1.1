@@ -78,3 +78,29 @@ module.exports.pictureCorrect4 = {
     description: "This picture was added to see later (Ü4) how well your layout handles this. Sorry about that challenge. ",
     views: 0
 };
+
+module.exports.pictureCorrect5 = {
+    views: '+1'
+};
+
+module.exports.pictureWrongPatch1 = {
+    views: '+1',
+    src:'asdasd'
+};
+module.exports.pictureWrongID2 = {
+    id: 999,
+
+};
+
+module.exports.pictureWrongPatch3 = {
+    width: 1280,
+    height: 720,
+    src: "https://picsum.photos/1280/720",
+    title: "This title is one char too long. This title is one char too long. This title is one char too long.This title is one char too long. Thistitle ",
+    description: "Taken from picsum.photos as it is easier due to copyright regulations. Still a nice picture. And as it is random you nalways see something different on reload, uh.",
+    views: '+1'
+};
+
+module.exports.pictureWrongPatch4 = {
+    views: '1'
+};

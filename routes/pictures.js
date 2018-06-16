@@ -25,9 +25,9 @@ const storeKey = 'pictures';
 
 
 // TODO if you like, you can use these objects for easy checking of required/optional and internalKeys....or remove it.
-const requiredKeys = {width: 'number', height: 'number', src: 'string'};
-const optionalKeys = {title: 'string', description: 'string', views: 'number'};
-const internalKeys = {id: 'number', timestamp: 'number'};
+// const requiredKeys = {width: 'number', height: 'number', src: 'string'};
+// const optionalKeys = {title: 'string', description: 'string', views: 'number'};
+// const internalKeys = {id: 'number', timestamp: 'number'};
 const generalKey = {
     width: 'number',
     height: 'number',
@@ -38,10 +38,22 @@ const generalKey = {
     id: 'number',
     timestamp: 'number'
 };
+const queries = {offset: 'number', filter: 'string', limit: 'number'};
 
 //Middleware checks JSON Body
 
 pictures.use((req, res, next) => {
+
+    if (['PUT', 'POST', 'PATCH'].includes(req.method)) {
+        Object.keys(req.body).forEach((elem) => {
+            if (!(elem in generalKey)) {
+                let err = new HttpError('Wrong Body!', 400);
+                next(err);
+                return;
+            }
+        })
+    }
+
 
     if (req.method === 'POST') {
         if (typeof req.body.width !== 'number' || req.body.width < 0 ||
@@ -52,6 +64,29 @@ pictures.use((req, res, next) => {
             return;
         }
     }
+
+    if (['PATCH'].includes(req.method)) {
+        Object.keys(req.body).forEach((elem) => {
+            if (elem !== 'views') {
+                let err = new HttpError('Bad Patch Body', 400);
+                next(err);
+                return;
+            }
+        });
+
+        if (req.body.views[0] !== '+') {
+            let err = new HttpError('views is wrong', 400);
+            next(err);
+            return;
+        }
+        const views = req.body.views.slice(1, req.body.views.length);
+        if (isNaN(views) || views < 0) {
+            let err = new HttpError('views is wrong', 400);
+            next(err);
+            return;
+        }
+    }
+
 
     if (['PUT', 'POST'].includes(req.method)) {
         if (req.body.title && (typeof req.body.title !== 'string' || req.body.title.length > 140)) {
@@ -69,14 +104,18 @@ pictures.use((req, res, next) => {
             next(err);
             return;
         }
-        if (!(/application\/json/.test(req.get('Content-Type')))) {
-            let err = new HttpError('you sent wrong Content-Type', 415);
-            next(err);
-            return;
-        }
     }
 
     if (req.method === 'GET') {
+
+        for (let prop in req.query) {
+            if (!(prop in queries) && !(prop in generalKey)) {
+                let err = new HttpError('bad query!', 400);
+                next(err);
+                return;
+            }
+        }
+
         let filterParams;
         if (req.query.filter) {
             filterParams = req.query.filter.split(',');
@@ -89,15 +128,14 @@ pictures.use((req, res, next) => {
             });
         }
         if (req.query.offset) {
-            console.log(req.query.offset, 'puttaaaa');
-            if (isNaN(req.query.offset) || req.query.offset < 0){
+            if (isNaN(req.query.offset) || req.query.offset < 0) {
                 let err = new HttpError('bad offset param!', 400);
                 next(err);
             }
         }
 
         if (req.query.limit) {
-            if (isNaN(req.query.limit) || req.query.limit < 1){
+            if (isNaN(req.query.limit) || req.query.limit < 1) {
                 let err = new HttpError('bad limit param!', 400);
                 next(err);
             }
@@ -114,33 +152,6 @@ pictures.route('/')
 
         res.locals.items = store.select(storeKey);
         res.locals.processed = true;
-
-        if (req.query.filter) {
-            const filterParams = req.query.filter.split(',');
-            res.locals.items.forEach((elem) => {
-                Object.keys(elem).forEach((key) => {
-                    if (!filterParams.includes(key)) {
-                        delete elem[key];
-                    }
-                });
-                console.log(elem);
-            });
-        }
-
-        if (req.query.offset){
-            if (req.query.offset >= res.locals.items.length){
-                let err = new HttpError('Bad Offset Parameter', 400);
-                next(err);
-            }
-                res.locals.items.splice(0,req.query.offset);
-        }
-
-        if (req.query.limit){
-            if (req.query.limit < res.locals.items.length){
-                res.locals.items.splice(req.query.limit);
-            }
-        }
-
         logger("GET fetched store items");
 
         next();
@@ -156,11 +167,9 @@ pictures.route('/')
             description: req.body.description ? req.body.description : '',
             views: req.body.views ? req.body.views : 0
         };
-        // if (picture.height == '')s
         let result = store.insert(storeKey, picture);
         res.status(201).json(result);
-        // let err = new HttpError('Unimplemented method!', codes.servererror);
-        // next(err);
+        delete result;
     })
     .all((req, res, next) => {
         if (res.locals.processed) {
@@ -210,6 +219,18 @@ pictures.route('/:id')
         const result = store.select(storeKey, req.params.id);
         res.status(200).json(result);
     })
+    .patch((req, res, next) => {
+        let buffer = store.select(storeKey, req.params.id);
+        if (!buffer) {
+            let err1 = new HttpError('Not Found ', 404);
+            next(err1);
+        }
+        buffer.views = buffer.views + parseInt(req.body.views.slice(1, req.body.views.length));
+        store.replace(storeKey, req.params.id, buffer);
+        res.locals.items = store.select(storeKey,req.params.id);
+        res.locals.processed = true;
+        res.status(200).json(res.locals.items);
+    })
     .delete((req, res, next) => {
         res.locals.processed = true;
         try {
@@ -237,8 +258,51 @@ pictures.route('/:id')
  */
 pictures.use((req, res, next) => {
     if (res.locals.items) {
+
+        // Search by Prop
+
+        for (let query in req.query) {
+            if (query in generalKey) {
+                res.locals.items.forEach((elem, index) => {
+                    if (req.query[query] != elem[query]) {
+                        delete res.locals.items[index];
+                    }
+                });
+                res.locals.items = res.locals.items.filter(elem => elem);
+            }
+        }
+
+        // filter function
+        if (req.query.filter) {
+            const filterParams = req.query.filter.split(',');
+            res.locals.items.forEach((elem) => {
+                Object.keys(elem).forEach((key) => {
+                    if (!filterParams.includes(key)) {
+                        delete elem[key];
+                    }
+                });
+            });
+        }
+        // offset function
+        if (req.query.offset) {
+            if (req.query.offset >= res.locals.items.length) {
+                let err = new HttpError('Bad Offset Parameter', 400);
+                next(err);
+            }
+            res.locals.items.splice(0, req.query.offset);
+        }
+
+
+        // limit function
+        if (req.query.limit) {
+            if (req.query.limit < res.locals.items.length) {
+                res.locals.items.splice(req.query.limit);
+            }
+        }
+
         res.json(res.locals.items);
         delete res.locals.items;
+
     } else if (res.locals.processed) {
         res.set('Content-Type', 'application/json'); // not really necessary if "no content"
         if (res.get('Status-Code') == undefined) { // maybe other code has set a better status code before

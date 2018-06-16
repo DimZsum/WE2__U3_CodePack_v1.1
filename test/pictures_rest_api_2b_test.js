@@ -24,7 +24,7 @@ const pictureCorrect3 = cfg.pictureCorrect3;
 const pictureCorrect4 = cfg.pictureCorrect4;
 
 // start of tests ********************************************************************************
-describe('Task 2.b Limits and Offset', () => {
+describe.skip('Task 2.b Limits and Offset', () => {
     const pictureResults = [];
     let totalResults = [];
     let total = 0;
