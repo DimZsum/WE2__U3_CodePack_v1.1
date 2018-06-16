@@ -23,7 +23,7 @@ const pictureCorrectMax = cfg.pictureCorrectMax;
 const pictureCorrect3 = cfg.pictureCorrect3;
 
 // start of tests ********************************************************************************
-describe.skip('Task 2.a Filter', () => {
+describe('Task 2.a Filter', () => {
     let pictureCorrect1Result = null;
     let pictureCorrect2Result = null;
     const pictureIDsCleanup = [];

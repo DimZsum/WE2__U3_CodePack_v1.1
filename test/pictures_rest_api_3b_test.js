@@ -28,7 +28,7 @@ const wrongID = cfg.pictureWrongID2;
 const wrongPatch2 = cfg.pictureWrongPatch4;
 
 // start of tests ********************************************************************************
-describe('Task 3.b patch', () => {
+describe.skip('Task 3.b patch', () => {
     let pictureCorrect1Result = null;
     let pictureCorrect2Result = null;
     const pictureIDsCleanup = [];

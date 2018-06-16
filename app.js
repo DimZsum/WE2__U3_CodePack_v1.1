@@ -28,6 +28,8 @@ const debug = require('debug')('we2:server');
 const HttpError = require('./restapi/http-error.js');
 const restAPIchecks = require('./restapi/request-checks.js');
 const pictures = require('./routes/pictures');
+const filterError = require('./restapi/filter-error');
+const filterMiddleware = require('./restapi/filter-middleware');
 
 
 // app creation
@@ -47,8 +49,14 @@ app.use(requestLogger('dev'));
 app.use(restAPIchecks);
 
 
+app.use(filterError);
+
 // Routes ******************************************************
 app.use('/pictures', pictures);
+
+
+
+app.use(filterMiddleware);
 
 
 // (from express-generator boilerplate)
