@@ -26,34 +26,9 @@ const storeKey = 'pictures';
 
 // TODO if you like, you can use these objects for easy checking of required/optional and internalKeys....or remove it.
 const requiredKeys = {width: 'number', height: 'number', src: 'string'};
-const optionalKeys = {title: 'string', description: 'string', views: 'number'};
-const internalKeys = {id: 'number', timestamp: 'number'};
-const generalKey = {
-    width: 'number',
-    height: 'number',
-    src: 'string',
-    title: 'string',
-    description: 'string',
-    views: 'number',
-    id: 'number',
-    timestamp: 'number'
-};
-const queries = {offset: 'number', filter: 'string', limit: 'number'};
 
-//Middleware checks JSON Body
 
 pictures.use((req, res, next) => {
-
-    if (['PUT', 'POST', 'PATCH'].includes(req.method)) {
-        Object.keys(req.body).forEach((elem) => {
-            if (!(elem in generalKey)) {
-                let err = new HttpError('Wrong Body!', 400);
-                next(err);
-                return;
-            }
-        })
-    }
-
 
     if (req.method === 'POST') {
         Object.keys(requiredKeys).forEach((key)=> {
@@ -120,44 +95,6 @@ pictures.use((req, res, next) => {
             return;
         }
     }
-
-    if (req.method === 'GET') {
-
-        for (let prop in req.query) {
-            if (!(prop in queries) && !(prop in generalKey)) {
-                let err = new HttpError('bad query!', 400);
-                next(err);
-                return;
-            }
-        }
-
-        // let filterParams;
-        // if (req.query.filter) {
-        //     filterParams = req.query.filter.split(',');
-        //     console.log(filterParams);
-        //     filterParams.forEach((elem) => {
-        //         if (!(elem in generalKey)) {
-        //             let err = new HttpError('filter key does not exist!', 400);
-        //             next(err);
-        //         }
-        //     });
-        // }
-        // if (req.query.offset) {
-        //     if (isNaN(req.query.offset) || req.query.offset < 0) {
-        //         let err = new HttpError('bad offset param!', 400);
-        //         next(err);
-        //     }
-        // }
-        //
-        // if (req.query.limit) {
-        //     if (isNaN(req.query.limit) || req.query.limit < 1) {
-        //         let err = new HttpError('bad limit param!', 400);
-        //         next(err);
-        //     }
-        // }
-    }
-
-
     next();
 });
 
@@ -223,7 +160,7 @@ pictures.route('/:id')
         };
         store.replace(storeKey, req.params.id, buffer);
         res.locals.items = store.select(storeKey, req.params.id);
-        res.processed = true;
+        res.locals.processed = true;
         res.status(200);
         next();
     })

@@ -28,6 +28,7 @@ const debug = require('debug')('we2:server');
 const HttpError = require('./restapi/http-error.js');
 const restAPIchecks = require('./restapi/request-checks.js');
 const pictures = require('./routes/pictures');
+const users = require('./routes/users');
 const filterError = require('./restapi/filter-error');
 const filterMiddleware = require('./restapi/filter-middleware');
 
@@ -52,7 +53,9 @@ app.use(restAPIchecks);
 app.use(filterError);
 
 // Routes ******************************************************
+app.use('/users', users);
 app.use('/pictures', pictures);
+
 
 
 

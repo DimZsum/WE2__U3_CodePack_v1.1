@@ -22,12 +22,12 @@ const pictureCorrectMin = cfg.pictureCorrectMin;
 const pictureCorrectMax = cfg.pictureCorrectMax;
 
 // start of tests ********************************************************************************
-describe.skip('Task 1.a CRUD', () => {
+describe('Task 1.a CRUD', () => {
     let pictureCorrect1Result = null;
     let pictureCorrect2Result = null;
     const pictureIDsCleanup = [];
     let myTime = new Date().getTime() - 61*1000*60; // remember time - 61min (to allow 1h shifts)
-    describe.skip('/pictures REST API POST', () => {
+    describe('/pictures REST API POST', () => {
         // good POSTs
         it('should save a proper POST (and add all missing fields) and sends back the complete object with id, timestamp etc.', (done) => {
             request(pictureURL)
@@ -111,7 +111,7 @@ describe.skip('Task 1.a CRUD', () => {
         });
     });
     // *******************************************************
-    describe.skip('/pictures/:id REST API PUT', function() {
+    describe('/pictures/:id REST API PUT', function() {
         // good PUTs
         it('should save a proper PUT with required fields and change in .description set to ""', (done) => {
             pictureCorrect1Result.description = "";
@@ -182,7 +182,7 @@ describe.skip('Task 1.a CRUD', () => {
         });
     });
     // *******************************************************
-    describe.skip('/pictures/:id REST API DELETE', () => {
+    describe('/pictures/:id REST API DELETE', () => {
         // good DELETEs
         it('should properly delete and answer with code 204', (done) => {
             request(pictureURL)
