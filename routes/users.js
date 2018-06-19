@@ -74,7 +74,8 @@ users.route('/')
 users.route('/:id')
     .get((req, res, next) => {
         res.locals.items = store.select(storeKey, req.params.id);
-        res.locals.processed = true;
+        res.locals.processed = true
+
 
         logger("GET fetched store items");
         next();
