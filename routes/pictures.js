@@ -21,6 +21,7 @@ const HttpError = require('../restapi/http-error.js');
 
 const pictures = express.Router();
 
+//constant for pictures like a libary
 const storeKey = 'pictures';
 
 
@@ -29,7 +30,8 @@ const requiredKeys = {width: 'number', height: 'number', src: 'string'};
 
 
 pictures.use((req, res, next) => {
-
+//Tests for failure
+    //asks if json body is in requiredKeys
     if (req.method === 'POST') {
         Object.keys(requiredKeys).forEach((key)=> {
             if(!(key in req.body)){
@@ -40,6 +42,7 @@ pictures.use((req, res, next) => {
         });
     }
 
+    //only allows to patch views
     if (['PATCH'].includes(req.method)) {
         Object.keys(req.body).forEach((elem) => {
             if (elem !== 'views') {
@@ -48,12 +51,13 @@ pictures.use((req, res, next) => {
                 return;
             }
         });
-
+        //view have to be posivite
         if (req.body.views[0] !== '+') {
             let err = new HttpError('views is wrong', 400);
             next(err);
             return;
         }
+        //get the number
         const views = req.body.views.slice(1, req.body.views.length);
         if (isNaN(views) || views < 0) {
             let err = new HttpError('views is wrong', 400);
@@ -63,6 +67,7 @@ pictures.use((req, res, next) => {
     }
 
 
+    //testing if put and post is correct
     if (['PUT', 'POST'].includes(req.method)) {
         if (req.body.title && (typeof req.body.title !== 'string' || req.body.title.length > 140)) {
             let err = new HttpError('Title too long!', 400);
@@ -101,7 +106,7 @@ pictures.use((req, res, next) => {
 /* GET all pictures */
 pictures.route('/')
     .get((req, res, next) => {
-
+        //saves res json in locals.items
         res.locals.items = store.select(storeKey);
         res.locals.processed = true;
         logger("GET fetched store items");
@@ -125,6 +130,7 @@ pictures.route('/')
         res.status(201);
         next();
     })
+    //if not get or post we get a failure
     .all((req, res, next) => {
         if (res.locals.processed) {
             next();
@@ -147,9 +153,12 @@ pictures.route('/:id')
         next();
     })
     .put((req, res, next) => {
+        //getting the object from the store
         let buffer = store.select(storeKey, req.params.id);
+        //we change and save in buffer
         buffer = {
             timestamp: new Date().getTime(),
+            //if its there then check if its undefined and get it or take the old value
             width: req.body.width !== undefined ? req.body.width : buffer.width,
             height: req.body.height !== undefined ? req.body.height : buffer.height,
             src: req.body.src !== undefined ? req.body.src : buffer.src,
@@ -170,6 +179,7 @@ pictures.route('/:id')
             let err1 = new HttpError('Not Found ', 404);
             next(err1);
         }
+        //get old value of object and add it with new value for example 20 + 20 = 40
         buffer.views = buffer.views + parseInt(req.body.views.slice(1, req.body.views.length));
         store.replace(storeKey, req.params.id, buffer);
         res.locals.items = store.select(storeKey,req.params.id);
@@ -189,6 +199,7 @@ pictures.route('/:id')
 
         next();
     })
+    //if no method is usable we get a failure
     .all((req, res, next) => {
         if (res.locals.processed) {
             next()

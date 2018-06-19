@@ -59,8 +59,8 @@ router.use((req, res, next) => {
     }
 
     if (res.locals.items) {
-        // filter by attributes
-
+        // filter by attributes 3.a
+        //iterates through our database and checks if the attributes are included -> if not delete
         for (let query in req.query) {
             if (query in generalKey) {
                 res.locals.items.forEach((elem, index) => {
@@ -68,13 +68,15 @@ router.use((req, res, next) => {
                         delete res.locals.items[index];
                     }
                 });
+                //delete every null object
                 res.locals.items = res.locals.items.filter(elem => elem);
             }
         }
 
-        // function only show certain attributes
+        // function to only show certain attributes 2.a
         if (req.query.filter) {
             const filterParams = req.query.filter.split(',');
+            //if the res obj is an array iterate through it and delte the params we dont want
             if (res.locals.items.constructor === Array){
                 res.locals.items.forEach((elem) => {
                     Object.keys(elem).forEach((key) => {
@@ -83,6 +85,7 @@ router.use((req, res, next) => {
                         }
                     });
                 });
+                //if its not an array do the same for this object
             } else {
                 const filterParams = req.query.filter.split(',');
                 Object.keys(res.locals.items).forEach((key) => {
@@ -93,8 +96,9 @@ router.use((req, res, next) => {
             }
         }
         // offset function
+        //deletes every object to offset
         if (req.query.offset) {
-            console.log(res.locals.items.length);
+            //check if offset longer item length
             if (req.query.offset >= res.locals.items.length) {
                 let err = new HttpError('Bad Offset Parameter', codes.wrongrequest);
                 next(err);
@@ -105,7 +109,9 @@ router.use((req, res, next) => {
 
 
         // limit function
+        //deletes from pos x everything
         if (req.query.limit) {
+            //checks if limit is smaller than item length
             if (req.query.limit < res.locals.items.length) {
                 res.locals.items.splice(req.query.limit);
             }
