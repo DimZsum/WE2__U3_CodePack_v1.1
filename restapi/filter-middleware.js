@@ -25,7 +25,8 @@ const userKey = {
     firstname:'string',
     lastname: 'string',
     password: 'string',
-    favourites: []
+    favourites: [],
+    id: 'number'
 };
 
 

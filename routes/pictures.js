@@ -23,6 +23,7 @@ const pictures = express.Router();
 
 //constant for pictures like a libary
 const storeKey = 'pictures';
+const userKey = 'users';
 
 
 // TODO if you like, you can use these objects for easy checking of required/optional and internalKeys....or remove it.
@@ -191,6 +192,24 @@ pictures.route('/:id')
         res.locals.processed = true;
         try {
             store.remove(storeKey, req.params.id);
+
+            // delete pictures in User.favourites
+
+            const users = store.select(userKey);
+            if(users){
+                users.forEach((elem)=> {
+                    console.log(elem);
+                    elem.favourites.forEach((picId,index)=>{
+                        if (picId === parseInt(req.params.id,10)) {
+                            delete elem.favourites[index];
+                        }
+                    });
+                    // delete all null Objects
+                    elem.favourites = elem.favourites.filter(elem=>elem);
+                    store.replace(userKey,elem.id,elem);
+                })
+
+            }
 
         } catch (err) {
             let err1 = new HttpError('Not Found ', 404);
